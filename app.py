@@ -173,7 +173,41 @@ def search_venues():
 @app.route("/venues/<int:venue_id>")
 def show_venue(venue_id):
     venue = Venue.query.get_or_404(venue_id)
-    return render_template("pages/show_venue.html", venue=venue)
+    upcoming_shows = []
+    past_shows = []
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    for show in venue.shows:
+        show.start_time = show.start_time.strftime("%Y-%m-%d %H:%M:%S")
+        show_item = {
+            'artist_id': show.artist_id,
+            'artist_name': show.Artist.name,
+            'artist_image_link': show.Artist.image_link,
+            'start_time': show.start_time,
+        } 
+        if show.start_time > now:
+            upcoming_shows.append(show_item)
+        else:
+            past_shows.append(show_item)
+    data = {
+        "id": venue.id,
+        "name": venue.name,
+        "city": venue.city,
+        "state": venue.state,
+        "address": venue.address,
+        "facebook_link": venue.facebook_link,
+        "seeking_talent": venue.seeking_talent,
+        "seeking_description": venue.seeking_description,
+        "website_link": venue.website_link,
+        "image_link": venue.image_link,
+        "genres": venue.genres,
+        "upcoming_shows_count": len(upcoming_shows),
+        "upcoming_shows": upcoming_shows,
+        "past_shows_count": len(past_shows),
+        "past_shows": past_shows,
+    }
+    print(data)
+
+    return render_template("pages/show_venue.html", venue=data)
 
 
 #  Create Venue
@@ -221,9 +255,7 @@ def create_venue_submission():
         flash("Venue " + request.form["name"] + " was successfully listed!")
     except Exception as e:
         db.session.rollback()
-        flash(
-            "An error occurred. Venue " + request.form["name"] + " could not be listed."
-        )
+        flash("An error occurred. Venue " + request.form["name"] + " could not be listed.")
         print(e)
     return render_template("pages/home.html")
 
@@ -235,7 +267,16 @@ def delete_venue(venue_id):
 
     # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
     # clicking that button delete it from the db then redirect the user to the homepage
-    return None
+    venue = Venue.query.get_or_404(venue_id)
+    del_venue = venue.name
+    try:
+        db.session.delete(venue)
+        db.session.commit()
+        flash("Venue" + del_venue + " was deleted!")
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred. Venue " + del_venue + "could not be deleted!")
+    return render_template("pages/home.html")
 
 
 #  Artists
@@ -275,7 +316,40 @@ def show_artist(artist_id):
     # shows the artist page with the given artist_id
     # TODO: replace with real artist data from the artist table, using artist_id
     artist = Artist.query.get_or_404(artist_id)
-    return render_template("pages/show_artist.html", artist=artist)
+    upcoming_shows = []
+    past_shows = []
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    for show in artist.shows:
+        show.start_time = show.start_time.strftime("%Y-%m-%d %H:%M:%S")
+        show_item = {
+            'venue_id': show.venue_id,
+            'venue_name': show.Venue.name,
+            'venue_image_link': show.Venue.image_link,
+            'start_time': show.start_time
+        }
+        if show.start_time > now:
+            upcoming_shows.append(show_item)
+        else:
+            past_shows.append(show_item)
+    data = {
+        "id": artist.id,
+        "name": artist.name,
+        "city": artist.city,
+        "state": artist.state,
+        "phone": artist.phone,
+        "facebook_link": artist.facebook_link,
+        "genres": artist.genres,
+        "image_link": artist.image_link,
+        "website_link": artist.website_link,
+        "seeking_venue": artist.seeking_venue,
+        "seeking_description": artist.seeking_description,
+        "upcoming_shows": upcoming_shows,
+        "past_shows": past_shows,
+        "upcoming_shows_count": len(upcoming_shows),
+        "past_shows_count": len(past_shows),
+    }
+    print(data)
+    return render_template("pages/show_artist.html", artist=data)
 
 
 #  Update
@@ -305,11 +379,7 @@ def edit_artist_submission(artist_id):
         flash("Artist " + request.form["name"] + " was successfully updated!")
     except Exception as e:
         db.session.rollback()
-        flash(
-            "An error occurred. Artist "
-            + request.form["name"]
-            + " could not be updated."
-        )
+        flash("An error occurred. Artist " + request.form["name"] + " could not be updated.")
     return redirect(url_for("show_artist", artist_id=artist_id))
 
 
@@ -336,11 +406,7 @@ def edit_venue_submission(venue_id):
         flash("Venue " + request.form["name"] + " was successfully updated!")
     except Exception as e:
         db.session.rollback()
-        flash(
-            "An error occurred. Venue "
-            + request.form["name"]
-            + " could not be updated."
-        )
+        flash("An error occurred. Venue " + request.form["name"] + " could not be updated.")
     return redirect(url_for("show_venue", venue_id=venue_id))
 
 
@@ -389,11 +455,7 @@ def create_artist_submission():
         flash("Artist " + request.form["name"] + " was successfully listed!")
     except Exception as e:
         db.session.rollback()
-        flash(
-            "An error occurred. Artist "
-            + request.form["name"]
-            + " could not be listed."
-        )
+        flash("An error occurred. Artist " + request.form["name"] + " could not be listed.")
     return render_template("pages/home.html")
 
 
