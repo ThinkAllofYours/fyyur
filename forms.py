@@ -104,6 +104,7 @@ class VenueForm(Form):
             ("Reggae", "Reggae"),
             ("Rock n Roll", "Rock n Roll"),
             ("Soul", "Soul"),
+            ("Swing", "Swing"),
             ("Other", "Other"),
         ],
     )
