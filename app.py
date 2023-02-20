@@ -221,7 +221,9 @@ def create_venue_submission():
         flash("Venue " + request.form["name"] + " was successfully listed!")
     except Exception as e:
         db.session.rollback()
-        flash("An error occurred. Venue " + request.form["name"] + " could not be listed.")
+        flash(
+            "An error occurred. Venue " + request.form["name"] + " could not be listed."
+        )
         print(e)
     return render_template("pages/home.html")
 
@@ -303,7 +305,11 @@ def edit_artist_submission(artist_id):
         flash("Artist " + request.form["name"] + " was successfully updated!")
     except Exception as e:
         db.session.rollback()
-        flash("An error occurred. Artist " + request.form["name"] + " could not be updated.")
+        flash(
+            "An error occurred. Artist "
+            + request.form["name"]
+            + " could not be updated."
+        )
     return redirect(url_for("show_artist", artist_id=artist_id))
 
 
@@ -330,7 +336,11 @@ def edit_venue_submission(venue_id):
         flash("Venue " + request.form["name"] + " was successfully updated!")
     except Exception as e:
         db.session.rollback()
-        flash("An error occurred. Venue " + request.form["name"] + " could not be updated.")
+        flash(
+            "An error occurred. Venue "
+            + request.form["name"]
+            + " could not be updated."
+        )
     return redirect(url_for("show_venue", venue_id=venue_id))
 
 
@@ -379,7 +389,11 @@ def create_artist_submission():
         flash("Artist " + request.form["name"] + " was successfully listed!")
     except Exception as e:
         db.session.rollback()
-        flash("An error occurred. Artist " + request.form["name"] + " could not be listed.")
+        flash(
+            "An error occurred. Artist "
+            + request.form["name"]
+            + " could not be listed."
+        )
     return render_template("pages/home.html")
 
 
