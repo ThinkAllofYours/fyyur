@@ -8,14 +8,13 @@ from wtforms import (
     BooleanField,
 )
 from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms.validators import Regexp
 
 
 class ShowForm(Form):
     artist_id = StringField("artist_id")
     venue_id = StringField("venue_id")
-    start_time = DateTimeField(
-        "start_time", validators=[DataRequired()], default=datetime.today()
-    )
+    start_time = DateTimeField("start_time", validators=[DataRequired()], default=datetime.today())
 
 
 class VenueForm(Form):
@@ -79,8 +78,17 @@ class VenueForm(Form):
         ],
     )
     address = StringField("address", validators=[DataRequired()])
-    phone = StringField("phone")
-    image_link = StringField("image_link")
+    phone = StringField(
+        "phone",
+        validators=[
+            DataRequired(),
+            Regexp(
+                "^[0-9]{3}-[0-9]{4}-[0-9]{4}$",
+                message="Phone number must be in the format XXX-XXXX-XXXX",
+            ),
+        ],
+    )
+    image_link = StringField("image_link", validators=[URL()])
     genres = SelectMultipleField(
         # TODO implement enum restriction
         "genres",
@@ -104,13 +112,11 @@ class VenueForm(Form):
             ("Reggae", "Reggae"),
             ("Rock n Roll", "Rock n Roll"),
             ("Soul", "Soul"),
-            ("Swing", "Swing"),
             ("Other", "Other"),
         ],
     )
     facebook_link = StringField("facebook_link", validators=[URL()])
-    website_link = StringField("website_link")
-
+    website_link = StringField("website_link", validators=[URL()])
     seeking_talent = BooleanField("seeking_talent")
 
     seeking_description = StringField("seeking_description")
@@ -177,10 +183,16 @@ class ArtistForm(Form):
         ],
     )
     phone = StringField(
-        # TODO implement validation logic for phone
-        "phone"
+        "phone",
+        validators=[
+            DataRequired(),
+            Regexp(
+                "^[0-9]{3}-[0-9]{4}-[0-9]{4}$",
+                message="Phone number must be in the format XXX-XXXX-XXXX",
+            ),
+        ],
     )
-    image_link = StringField("image_link")
+    image_link = StringField("image_link", validators=[URL()])
     genres = SelectMultipleField(
         "genres",
         validators=[DataRequired()],
@@ -207,12 +219,11 @@ class ArtistForm(Form):
         ],
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
         "facebook_link",
         validators=[URL()],
     )
 
-    website_link = StringField("website_link")
+    website_link = StringField("website_link", validators=[URL()])
 
     seeking_venue = BooleanField("seeking_venue")
 

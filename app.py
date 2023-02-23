@@ -31,6 +31,7 @@ with app.app_context():
 
 from models import Venue, Artist, Show
 
+
 # ----------------------------------------------------------------------------#
 # Filters.
 # ----------------------------------------------------------------------------#
@@ -44,6 +45,7 @@ def format_datetime(value, format="medium"):
 
 
 app.jinja_env.filters["datetime"] = format_datetime
+
 
 # ----------------------------------------------------------------------------#
 # Controllers.
@@ -111,11 +113,11 @@ def show_venue(venue_id):
     for show in venue.shows:
         show.start_time = show.start_time.strftime("%Y-%m-%d %H:%M:%S")
         show_item = {
-            'artist_id': show.artist_id,
-            'artist_name': show.Artist.name,
-            'artist_image_link': show.Artist.image_link,
-            'start_time': show.start_time,
-        } 
+            "artist_id": show.artist_id,
+            "artist_name": show.Artist.name,
+            "artist_image_link": show.Artist.image_link,
+            "start_time": show.start_time,
+        }
         if show.start_time > now:
             upcoming_shows.append(show_item)
         else:
@@ -125,6 +127,8 @@ def show_venue(venue_id):
         "name": venue.name,
         "city": venue.city,
         "state": venue.state,
+        "phone": venue.phone,
+        "website_link": venue.website_link,
         "address": venue.address,
         "facebook_link": venue.facebook_link,
         "seeking_talent": venue.seeking_talent,
@@ -137,8 +141,6 @@ def show_venue(venue_id):
         "past_shows_count": len(past_shows),
         "past_shows": past_shows,
     }
-    print(data)
-
     return render_template("pages/show_venue.html", venue=data)
 
 
@@ -155,40 +157,35 @@ def create_venue_form():
 @app.route("/venues/create", methods=["POST"])
 def create_venue_submission():
     # TODO: insert form data as a new Venue record in the db, instead
-    name = request.form.get("name")
-    city = request.form.get("city")
-    state = request.form.get("state")
-    address = request.form.get("address")
-    phone = request.form.get("phone")
-    image_link = request.form.get("image_link")
-    genres = request.form.getlist("genres")
-    facebook_link = request.form.get("facebook_link")
-    website_link = request.form.get("website_link")
-    seeking_talent = request.form.get("seeking_talent")
-    seeking_description = request.form.get("seeking_description")
-
-    venue = Venue(
-        name=name,
-        city=city,
-        state=state,
-        address=address,
-        phone=phone,
-        image_link=image_link,
-        genres=genres,
-        facebook_link=facebook_link,
-        website_link=website_link,
-        seeking_talent=seeking_talent == "y",
-        seeking_description=seeking_description,
-    )
-
-    db.session.add(venue)
-    try:
-        db.session.commit()
-        flash("Venue " + request.form["name"] + " was successfully listed!")
-    except Exception as e:
-        db.session.rollback()
-        flash("An error occurred. Venue " + request.form["name"] + " could not be listed.")
-        print(e)
+    form = VenueForm(request.form)
+    if form.validate():
+        try:
+            venue = Venue(
+                name=form.name.data,
+                city=form.city.data,
+                state=form.state.data,
+                address=form.address.data,
+                phone=form.phone.data,
+                image_link=form.image_link.data,
+                genres=form.genres.data,
+                facebook_link=form.facebook_link.data,
+                website_link=form.website_link.data,
+                seeking_talent=form.seeking_talent.data,
+                seeking_description=form.seeking_description.data,
+            )
+            db.session.add(venue)
+            db.session.commit()
+            # on successful db insert, flash success
+            flash("Venue " + request.form["name"] + " was successfully listed!")
+        except:
+            db.session.rollback()
+            flash("An error occurred. Venue " + request.form["name"] + " could not be listed.")
+        finally:
+            db.session.close()
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(field + " - " + str(error), "danger")
     return render_template("pages/home.html")
 
 
@@ -254,10 +251,10 @@ def show_artist(artist_id):
     for show in artist.shows:
         show.start_time = show.start_time.strftime("%Y-%m-%d %H:%M:%S")
         show_item = {
-            'venue_id': show.venue_id,
-            'venue_name': show.Venue.name,
-            'venue_image_link': show.Venue.image_link,
-            'start_time': show.start_time
+            "venue_id": show.venue_id,
+            "venue_name": show.Venue.name,
+            "venue_image_link": show.Venue.image_link,
+            "start_time": show.start_time,
         }
         if show.start_time > now:
             upcoming_shows.append(show_item)
@@ -280,7 +277,6 @@ def show_artist(artist_id):
         "upcoming_shows_count": len(upcoming_shows),
         "past_shows_count": len(past_shows),
     }
-    print(data)
     return render_template("pages/show_artist.html", artist=data)
 
 
@@ -325,20 +321,27 @@ def edit_venue(venue_id):
 @app.route("/venues/<int:venue_id>/edit", methods=["POST"])
 def edit_venue_submission(venue_id):
     venue = Venue.query.get_or_404(venue_id)
-    for field in request.form:
-        if field == "genres":
-            setattr(venue, field, request.form.getlist(field))
-        elif field == "seeking_talent":
-            setattr(venue, field, request.form.get(field) == "y")
-        else:
-            setattr(venue, field, request.form.get(field))
-    try:
-        db.session.add(venue)
-        db.session.commit()
-        flash("Venue " + request.form["name"] + " was successfully updated!")
-    except Exception as e:
-        db.session.rollback()
-        flash("An error occurred. Venue " + request.form["name"] + " could not be updated.")
+    form = VenueForm(obj=venue)
+    if form.validate():
+        for field in request.form:
+            if field == "genres":
+                setattr(venue, field, request.form.getlist(field))
+            elif field == "seeking_talent":
+                setattr(venue, field, request.form.get(field) == "y")
+            else:
+                setattr(venue, field, request.form.get(field))
+        try:
+            db.session.add(venue)
+            db.session.commit()
+            flash("Venue " + request.form["name"] + " was successfully updated!")
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred. Venue " + request.form["name"] + " could not be updated.")
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(field + " - " + str(error), "danger")
+
     return redirect(url_for("show_venue", venue_id=venue_id))
 
 
